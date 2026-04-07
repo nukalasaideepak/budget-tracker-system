@@ -42,7 +42,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
 
                         // Protected endpoints — require valid JWT
                         .requestMatchers("/transactions/**").authenticated()
@@ -55,7 +54,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/compare/**").authenticated()
                         .requestMatchers("/api/domains/**").authenticated()
                         .requestMatchers("/api/alerts/**").authenticated()
-
+                        .requestMatchers("/api/savings-goals/**").authenticated()
                         .anyRequest().authenticated()
                 )
 
@@ -69,7 +68,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
+        config.setAllowedOrigins(List.of("http://localhost:4200"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

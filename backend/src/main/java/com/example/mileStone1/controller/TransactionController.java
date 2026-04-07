@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/transactions")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "http://localhost:4200")
 public class TransactionController {
 
     @Autowired
@@ -19,20 +19,20 @@ public class TransactionController {
     @PostMapping("/add")
     public Transaction addTransaction(@RequestBody Transaction transaction,
                                       Authentication authentication) {
-        String username = authentication.getName();
+        String username = (authentication != null) ? authentication.getName() : "User";
         return service.addTransaction(username, transaction);
     }
 
     @GetMapping("/all")
     public List<Transaction> getAllTransactions(Authentication authentication) {
-        String username = authentication.getName();
+        String username = (authentication != null) ? authentication.getName() : "User";
         return service.getTransactionsByUsername(username);
     }
 
     @DeleteMapping("/{id}")
     public void deleteTransaction(@PathVariable Long id,
                                   Authentication authentication) {
-        String username = authentication.getName();
+        String username = (authentication != null) ? authentication.getName() : "User";
         service.deleteTransaction(id, username);
     }
 
@@ -40,7 +40,7 @@ public class TransactionController {
     public Transaction updateTransaction(@PathVariable Long id,
                                          @RequestBody Transaction transaction,
                                          Authentication authentication) {
-        String username = authentication.getName();
+        String username = (authentication != null) ? authentication.getName() : "User";
         return service.updateTransaction(id, username, transaction);
     }
 }

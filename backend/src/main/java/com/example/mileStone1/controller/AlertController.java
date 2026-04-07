@@ -11,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/alerts")
+@CrossOrigin(origins = "http://localhost:3000")
 public class AlertController {
 
     private final PriceAlertRepository alertRepository;
@@ -36,7 +37,7 @@ public class AlertController {
     @PostMapping("/notifications/{id}/read")
     public ResponseEntity<Void> markRead(@PathVariable Long id) {
         notificationRepository.findById(id).ifPresent(n -> {
-            n.setRead(true);
+            n.setIsRead(true);
             notificationRepository.save(n);
         });
         return ResponseEntity.ok().build();

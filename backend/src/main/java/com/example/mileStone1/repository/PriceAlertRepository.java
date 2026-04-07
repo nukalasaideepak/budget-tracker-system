@@ -8,6 +8,6 @@ import java.util.List;
 
 @Repository
 public interface PriceAlertRepository extends JpaRepository<PriceAlert, Long> {
-    List<PriceAlert> findByUsername(String username);
     List<PriceAlert> findByActiveTrue();
+    List<PriceAlert> findByUsername(String username);
 }

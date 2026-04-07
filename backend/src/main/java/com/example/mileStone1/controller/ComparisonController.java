@@ -12,6 +12,7 @@ import com.example.mileStone1.model.PriceHistory;
 
 @RestController
 @RequestMapping("/api/compare")
+@CrossOrigin(origins = "http://localhost:3000")
 public class ComparisonController {
 
     private final ComparisonService comparisonService;

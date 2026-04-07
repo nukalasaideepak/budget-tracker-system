@@ -12,7 +12,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "http://localhost:4200")
 public class AuthController {
 
     @Autowired
@@ -24,31 +24,60 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
         try {
-            User saved = userService.register(user);
+            userService.register(user);
             return ResponseEntity.ok(Map.of(
-                    "message", "User registered successfully",
-                    "username", saved.getUsername()
+                    "message", "Registration successful! You can now login to your account."
             ));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(
                     Map.of("error", "Registration failed: " + e.getMessage()));
         }
     }
 
+    @GetMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestParam String token) {
+        String result = userService.verifyEmail(token);
+        if (result.contains("successfully")) {
+            return ResponseEntity.ok(Map.of("message", result));
+        }
+        return ResponseEntity.badRequest().body(Map.of("error", result));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        userService.createPasswordResetTokenForUser(email);
+        return ResponseEntity.ok(Map.of("message", "If an account exists with this email, a reset link has been sent."));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        String newPassword = request.get("newPassword");
+        String result = userService.resetPassword(token, newPassword);
+        
+        if (result.contains("successful")) {
+            return ResponseEntity.ok(Map.of("message", result));
+        }
+        return ResponseEntity.badRequest().body(Map.of("error", result));
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody User user) {
-        Optional<User> dbUser = userService.login(user.getUsername(), user.getPassword());
-
-        if (dbUser.isPresent()) {
-            String token = jwtUtil.generateToken(dbUser.get().getUsername());
-            return ResponseEntity.ok(Map.of(
-                    "token", token,
-                    "username", dbUser.get().getUsername(),
-                    "role", dbUser.get().getRole()
-            ));
+        try {
+            Optional<User> dbUser = userService.login(user.getUsername(), user.getPassword());
+            if (dbUser.isPresent()) {
+                String token = jwtUtil.generateToken(dbUser.get().getUsername());
+                return ResponseEntity.ok(Map.of(
+                        "token", token,
+                        "username", dbUser.get().getUsername(),
+                        "role", dbUser.get().getRole()
+                ));
+            }
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid Credentials"));
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));
         }
-
-        return ResponseEntity.status(401).body(
-                Map.of("error", "Invalid Credentials"));
     }
 }

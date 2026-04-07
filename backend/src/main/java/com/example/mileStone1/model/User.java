@@ -1,5 +1,7 @@
 package com.example.mileStone1.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 @Entity
@@ -13,6 +15,8 @@ public class User {
     @Column(unique = true)
     private String username;
     private String email;
+
+    @JsonProperty
     private String password;
 
     private double income;
@@ -20,6 +24,7 @@ public class User {
     private double targetExpenses;
 
     private String role;
+    private boolean enabled = true;
 
     public User() {}
 
@@ -46,4 +51,7 @@ public class User {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public boolean isEnabled() { return enabled; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
 }

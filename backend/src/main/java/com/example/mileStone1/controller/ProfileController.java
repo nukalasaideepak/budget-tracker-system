@@ -3,6 +3,7 @@ package com.example.mileStone1.controller;
 import com.example.mileStone1.model.User;
 import com.example.mileStone1.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,7 +12,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/profile")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "http://localhost:4200")
 public class ProfileController {
 
     @Autowired
@@ -35,5 +36,23 @@ public class ProfileController {
         }
 
         return Map.of("error", "User not found");
+    }
+
+    @PostMapping
+    public User updateProfile(Authentication authentication, @RequestBody User profile) {
+        String username = authentication.getName();
+        return userService.updateProfile(username, profile);
+    }
+
+    @PostMapping("/verify-current-password")
+    public ResponseEntity<?> verifyPassword(Authentication authentication, @RequestBody Map<String, String> request) {
+        String username = authentication.getName();
+        String currentPassword = request.get("currentPassword");
+        boolean isValid = userService.verifyCurrentPassword(username, currentPassword);
+        
+        if (isValid) {
+            return ResponseEntity.ok(Map.of("message", "Password verified"));
+        }
+        return ResponseEntity.status(401).body(Map.of("error", "Incorrect current password"));
     }
 }

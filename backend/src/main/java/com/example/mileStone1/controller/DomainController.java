@@ -9,6 +9,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/domains")
+@CrossOrigin(origins = "http://localhost:3000")
 public class DomainController {
 
     private final ComparisonService comparisonService;
