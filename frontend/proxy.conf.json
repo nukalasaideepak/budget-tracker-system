@@ -1,0 +1,18 @@
+{
+  "/api": {
+    "target": "http://localhost:8082",
+    "secure": false
+  },
+  "/auth": {
+    "target": "http://localhost:8082",
+    "secure": false
+  },
+  "/transactions": {
+    "target": "http://localhost:8082",
+    "secure": false
+  },
+  "/budget": {
+    "target": "http://localhost:8082",
+    "secure": false
+  }
+}
