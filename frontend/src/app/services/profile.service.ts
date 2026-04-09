@@ -12,12 +12,14 @@ export interface UserProfile {
   password?: string;
 }
 
+import { environment } from '../../environments/environment';
+
 @Injectable({
   providedIn: 'root'
 })
 export class ProfileService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/profile';
+  private readonly baseUrl = `${environment.apiUrl}/api/profile`;
 
   getProfile(): Observable<UserProfile | { error: string }> {
     return this.http.get<UserProfile>(this.baseUrl);

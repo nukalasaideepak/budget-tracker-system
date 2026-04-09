@@ -5,6 +5,7 @@ import com.example.mileStone1.model.PriceResult;
 import com.example.mileStone1.model.SearchRequest;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -12,7 +13,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class RapidoAdapter implements ProviderAdapter {
 
     @Override
-    public PriceResult fetchPrice(SearchRequest request) {
+    public List<PriceResult> fetchPrice(SearchRequest request) {
         PriceResult result = new PriceResult();
         result.setProviderName(getProviderName());
         result.setDomainName(getDomainName());
@@ -41,7 +42,7 @@ public class RapidoAdapter implements ProviderAdapter {
             "surge", "None",
             "distance", String.format("%.1f km", distance)
         ));
-        return result;
+        return List.of(result);
     }
 
     @Override

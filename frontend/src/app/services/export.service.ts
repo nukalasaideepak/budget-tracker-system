@@ -2,13 +2,15 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 
+import { environment } from '../../environments/environment';
+
 @Injectable({
   providedIn: 'root'
 })
 export class ExportService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/export';
-  private readonly backupUrl = '/api/backup';
+  private readonly baseUrl = `${environment.apiUrl}/api/export`;
+  private readonly backupUrl = `${environment.apiUrl}/api/backup`;
 
   downloadCSV(): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/csv`, {
@@ -28,6 +30,10 @@ export class ExportService {
 
   syncToCloud(): Observable<any> {
     return this.http.post(`${this.backupUrl}/upload`, {});
+  }
+
+  diagnoseSync(): Observable<any> {
+    return this.http.get(`${this.backupUrl}/diagnose`);
   }
 
   private triggerDownload(blob: Blob, filename: string): void {

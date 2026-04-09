@@ -11,14 +11,17 @@ export interface Transaction {
   account: string;
   date: string;
   type: 'INCOME' | 'EXPENSE';
+  expenseLimit?: number;
 }
+
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TransactionService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/transactions';
+  private readonly baseUrl = `${environment.apiUrl}/transactions`;
 
   getTransactions(): Observable<Transaction[]> {
     return this.http.get<Transaction[]>(`${this.baseUrl}/all`);

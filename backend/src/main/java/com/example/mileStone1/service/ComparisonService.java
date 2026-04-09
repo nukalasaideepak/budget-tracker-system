@@ -21,6 +21,7 @@ public class ComparisonService {
     public ComparisonService(List<ProviderAdapter> adapters, PriceHistoryRepository historyRepository) {
         this.adapters = adapters;
         this.historyRepository = historyRepository;
+        System.out.println("ComparisonService initialized with " + (adapters != null ? adapters.size() : 0) + " adapters");
     }
 
     public List<PriceResult> compare(SearchRequest request) {
@@ -31,34 +32,35 @@ public class ComparisonService {
         List<PriceResult> results = new ArrayList<>();
         for (ProviderAdapter adapter : domainAdapters) {
             try {
-                PriceResult result = adapter.fetchPrice(request);
-                results.add(result);
-                
-                // Save current price to history
-                String queryKey = request.getQuery() != null ? request.getQuery() : (request.getFrom() + " to " + request.getTo());
-                if(queryKey == null || queryKey.isBlank() || queryKey.equals("null to null")) queryKey = "Default";
-                
-                historyRepository.save(new PriceHistory(
-                    request.getDomainName(),
-                    result.getProviderName(),
-                    queryKey,
-                    result.getPrice(),
-                    LocalDateTime.now()
-                ));
+                List<PriceResult> adapterResults = adapter.fetchPrice(request);
+                for (PriceResult result : adapterResults) {
+                    results.add(result);
+                    
+                    // Save current price to history
+                    String queryKey = request.getQuery() != null ? request.getQuery() : (request.getFrom() + " to " + request.getTo());
+                    if(queryKey == null || queryKey.isBlank() || queryKey.equals("null to null")) queryKey = "Default";
+                    
+                    historyRepository.save(new PriceHistory(
+                        request.getDomainName(),
+                        result.getProviderName(),
+                        queryKey,
+                        result.getPrice(),
+                        LocalDateTime.now()
+                    ));
 
-                // Mock past 7 days of data for graph if none exists
-                if (historyRepository.findByDomainNameAndQueryOrderByTimestampAsc(request.getDomainName(), queryKey).size() <= 1) {
-                    for(int i = 7; i >= 1; i--) {
-                        historyRepository.save(new PriceHistory(
-                            request.getDomainName(),
-                            result.getProviderName(),
-                            queryKey,
-                            result.getPrice() * (ThreadLocalRandom.current().nextDouble(0.85, 1.15)),
-                            LocalDateTime.now().minusDays(i)
-                        ));
+                    // Mock past 7 days of data for graph if none exists
+                    if (historyRepository.findByDomainNameAndQueryOrderByTimestampAsc(request.getDomainName(), queryKey).isEmpty()) {
+                        for(int i = 7; i >= 1; i--) {
+                            historyRepository.save(new PriceHistory(
+                                request.getDomainName(),
+                                result.getProviderName(),
+                                queryKey,
+                                result.getPrice() * (ThreadLocalRandom.current().nextDouble(0.85, 1.15)),
+                                LocalDateTime.now().minusDays(i)
+                            ));
+                        }
                     }
                 }
-
             } catch (Exception e) {
                 // Log and skip failed adapter
                 System.err.println("Failed to fetch from " + adapter.getProviderName() + ": " + e.getMessage());
@@ -94,26 +96,32 @@ public class ComparisonService {
                 .collect(Collectors.groupingBy(ProviderAdapter::getDomainName));
 
         Map<String, String> icons = Map.of(
-            "Transportation", "🚕",
-            "Food Delivery", "🍕",
+            "Cinemas", "🎬",
+            "Food Delivery", "🍔",
             "Grocery", "🛒",
-            "Travel", "✈️"
+            "Transportation", "🚕",
+            "Travel", "✈️",
+            "Bus Tickets", "🚌"
         );
         Map<String, String> colors = Map.of(
-            "Transportation", "#6366f1",
-            "Food Delivery", "#f97316",
+            "Cinemas", "#ec4899",
+            "Food Delivery", "#ef4444",
             "Grocery", "#10b981",
-            "Travel", "#3b82f6"
+            "Transportation", "#f59e0b",
+            "Travel", "#3b82f6",
+            "Bus Tickets", "#8b5cf6"
         );
         Map<String, String> descriptions = Map.of(
-            "Transportation", "Compare ride fares across Uber, Ola & Rapido — find the cheapest ride instantly",
-            "Food Delivery", "Compare food prices, delivery fees & offers from Swiggy and Zomato",
-            "Grocery", "Compare grocery prices & delivery times across BigBasket, Blinkit & Zepto",
-            "Travel", "Compare flight tickets, travel duration & hotel costs from MakeMyTrip & Goibibo"
+            "Cinemas", "Compare ticket prices, vouchers & offers for current 2026 releases",
+            "Food Delivery", "Find the lowest prices across Swiggy, Zomato and others",
+            "Grocery", "Compare essential prices across Blinkit, Zepto and BigBasket",
+            "Transportation", "Compare fares for Ola, Uber and Rapido instantly",
+            "Travel", "Find the best flight and hotel deals across major platforms",
+            "Bus Tickets", "Compare real-time bus fares and seat availability"
         );
 
         // Define desired order
-        List<String> domainOrder = List.of("Transportation", "Food Delivery", "Grocery", "Travel");
+        List<String> domainOrder = List.of("Cinemas", "Food Delivery", "Grocery", "Transportation", "Travel", "Bus Tickets");
 
         List<Map<String, Object>> domains = new ArrayList<>();
 

@@ -27,6 +27,23 @@ public class EmailService {
         sendEmail(to, subject, message);
     }
 
+    public void sendCategoryLimitAlert(String to, String category, Double limit) {
+        String subject = "BudgetWise Alert: " + category + " limit exceeded! 🚨";
+        String message = "Heads up!\n\nYou have just exceeded your monthly budget limit of ₹" + limit 
+            + " for the [" + category + "] category.\n\nPlease review your recent transactions on your dashboard to ensure you stay on track with your financial goals!\n\nhttp://localhost:4200/dashboard";
+
+        sendEmail(to, subject, message);
+    }
+
+    public void sendTransactionLimitAlert(String to, String transactionDesc, Double amount, Double limit) {
+        String subject = "BudgetWise Alert: Single Transaction Limit Exceeded! 🚨";
+        String message = "Heads up!\n\nYou just recorded an expense of ₹" + amount + " for '" + transactionDesc + "'.\n"
+            + "This exceeds or meets your self-imposed limit of ₹" + limit + " for this transaction!\n\n"
+            + "Please review your recent transactions on your dashboard to ensure you stay on track with your financial goals!\n\nhttp://localhost:4200/dashboard";
+
+        sendEmail(to, subject, message);
+    }
+
     private void sendEmail(String to, String subject, String content) {
         // Logging for initial developer verification
         System.out.println("------------------------------------------");

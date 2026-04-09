@@ -38,8 +38,8 @@ export class AuthService {
   }
 
   logout() {
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.USER_KEY);
+    sessionStorage.removeItem(this.TOKEN_KEY);
+    sessionStorage.removeItem(this.USER_KEY);
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
     this.router.navigate(['/login']);
@@ -58,17 +58,22 @@ export class AuthService {
   }
 
   private setSession(token: string, username: string) {
-    localStorage.setItem(this.TOKEN_KEY, token);
-    localStorage.setItem(this.USER_KEY, username);
+    sessionStorage.setItem(this.TOKEN_KEY, token);
+    sessionStorage.setItem(this.USER_KEY, username);
     this.currentUser.set(username);
     this.isAuthenticated.set(true);
   }
 
   getStoredToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    // One-time cleanup of old localStorage to fix the "not asking for login" issue
+    if (localStorage.getItem(this.TOKEN_KEY)) {
+      localStorage.removeItem(this.TOKEN_KEY);
+      localStorage.removeItem(this.USER_KEY);
+    }
+    return sessionStorage.getItem(this.TOKEN_KEY);
   }
 
   private getStoredUser(): string | null {
-    return localStorage.getItem(this.USER_KEY);
+    return sessionStorage.getItem(this.USER_KEY);
   }
 }

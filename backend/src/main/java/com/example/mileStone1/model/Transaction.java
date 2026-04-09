@@ -17,6 +17,7 @@ public class Transaction {
     private String account;
     private LocalDate date;
     private String type; // INCOME or EXPENSE
+    private Double expenseLimit;
 
     public Transaction() {}
 
@@ -43,4 +44,7 @@ public class Transaction {
 
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
+
+    public Double getExpenseLimit() { return expenseLimit; }
+    public void setExpenseLimit(Double expenseLimit) { this.expenseLimit = expenseLimit; }
 }

@@ -1,18 +1,20 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { TransactionService, Transaction } from '../services/transaction.service';
 import { ProfileService, UserProfile } from '../services/profile.service';
 import { BudgetService, Budget } from '../services/budget.service';
 import { AuthService } from '../services/auth.service';
 import { AddTransactionComponent } from './add-transaction.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
+import { ChatBoxComponent } from '../chat-box/chat-box.component';
+import { ManageLimitsComponent } from './manage-limits.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, AddTransactionComponent, SidebarComponent, ReactiveFormsModule],
+  imports: [CommonModule, RouterLink, RouterLinkActive, AddTransactionComponent, ManageLimitsComponent, SidebarComponent, ReactiveFormsModule, FormsModule, ChatBoxComponent],
   templateUrl: './dashboard.component.html',
   styles: [`
     :host { display: block; }
@@ -30,7 +32,8 @@ export class DashboardComponent implements OnInit {
     amount: [null as number | null, [Validators.required, Validators.min(0.01)]],
     type: ['', [Validators.required]],
     category: ['', [Validators.required]],
-    description: ['']
+    description: [''],
+    expenseLimit: [null as number | null]
   });
 
   // Reactive state
@@ -38,9 +41,10 @@ export class DashboardComponent implements OnInit {
   profile = signal<UserProfile | null>(null);
   budgets = signal<Budget[]>([]);
   showAddModal = signal(false);
+  showLimitsModal = signal(false);
   selectedTransaction = signal<Transaction | null>(null);
 
-  // Computed totals
+  // Computed totals (Total lifetime or all visible)
   totalBalance = computed(() => {
     return this.transactions().reduce((acc, tx) => {
       const amt = Number(tx.amount);
@@ -58,6 +62,31 @@ export class DashboardComponent implements OnInit {
     return this.transactions()
       .filter(tx => tx.type === 'EXPENSE')
       .reduce((acc, tx) => acc + Number(tx.amount), 0);
+  });
+
+  // Current Month Totals
+  monthlyIncome = computed(() => {
+    const now = new Date();
+    return this.transactions()
+      .filter(tx => {
+        const d = new Date(tx.date);
+        return tx.type === 'INCOME' && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      })
+      .reduce((acc, tx) => acc + Number(tx.amount), 0);
+  });
+
+  monthlyExpenses = computed(() => {
+    const now = new Date();
+    return this.transactions()
+      .filter(tx => {
+        const d = new Date(tx.date);
+        return tx.type === 'EXPENSE' && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      })
+      .reduce((acc, tx) => acc + Number(tx.amount), 0);
+  });
+
+  monthlySavingsSurplus = computed(() => {
+    return this.monthlyIncome() - this.monthlyExpenses();
   });
 
   ngOnInit() {
@@ -86,6 +115,10 @@ export class DashboardComponent implements OnInit {
     this.showAddModal.set(!this.showAddModal());
   }
 
+  toggleLimitsModal() {
+    this.showLimitsModal.set(!this.showLimitsModal());
+  }
+
   confirmDelete(id: number | undefined) {
     if (!id) return;
     if (confirm('Are you sure you want to delete this transaction?')) {
@@ -110,7 +143,8 @@ export class DashboardComponent implements OnInit {
         type: val.type,
         date: new Date().toISOString().split('T')[0],
         username: this.authService.currentUser() || 'User',
-        account: 'Cash'
+        account: 'Cash',
+        expenseLimit: val.expenseLimit || null
       };
 
       this.txService.addTransaction(transaction as any).subscribe({

@@ -8,12 +8,14 @@ export interface Budget {
   limitAmount: number;
 }
 
+import { environment } from '../../environments/environment';
+
 @Injectable({
   providedIn: 'root'
 })
 export class BudgetService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/budget';
+  private readonly baseUrl = `${environment.apiUrl}/budget`;
 
   getBudgets(): Observable<Budget[]> {
     return this.http.get<Budget[]>(`${this.baseUrl}/all`);

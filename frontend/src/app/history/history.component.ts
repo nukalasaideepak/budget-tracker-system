@@ -1,85 +1,83 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TransactionService, Transaction } from '../services/transaction.service';
-import { RouterLink } from '@angular/router';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { AddTransactionComponent } from '../dashboard/add-transaction.component';
 
 @Component({
   selector: 'app-history',
   standalone: true,
-  imports: [CommonModule, RouterLink, SidebarComponent, AddTransactionComponent],
+  imports: [CommonModule, SidebarComponent, AddTransactionComponent],
   template: `
-    <div class="layout">
-      <!-- Shared Sidebar -->
-      <app-sidebar></app-sidebar>
+    <header class="page-header">
+      <h1>Transaction <span class="accent">History</span></h1>
+      <p class="subtitle">A complete record of your financial journey.</p>
+    </header>
 
-      <main class="main-content">
-        <header class="page-header">
-          <h1>Transaction <span class="accent">History</span></h1>
-          <p class="subtitle">A complete record of your financial journey.</p>
-        </header>
+    <section class="glass glass-card table-container animate-fade">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Alert Limit</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (tx of transactions(); track tx.id) {
+            <tr>
+              <td>{{ tx.date | date:'mediumDate' }}</td>
+              <td>{{ tx.description }}</td>
+              <td><span class="category-tag">{{ tx.category }}</span></td>
+              <td>
+                <span class="type-tag" [class.income]="tx.type === 'INCOME'">
+                  {{ tx.type }}
+                </span>
+              </td>
+              <td class="amount-cell" [class.negative]="tx.type === 'EXPENSE'">
+                {{ tx.type === 'INCOME' ? '+' : '-' }}{{ tx.amount | currency:'INR':'symbol-narrow' }}
+              </td>
+              <td>
+                <button *ngIf="tx.type === 'EXPENSE' && tx.expenseLimit" class="limit-tag" (click)="promptLimit(tx)" title="Click to edit limit">
+                  {{ tx.expenseLimit | currency:'INR':'symbol-narrow' }} ✏️
+                </button>
+                <span *ngIf="tx.type === 'EXPENSE' && !tx.expenseLimit" style="color:var(--text-secondary);font-size:0.8rem">
+                  <button (click)="promptLimit(tx)" class="set-limit-btn">Set Limit</button>
+                </span>
+              </td>
+              <td>
+                <div class="tx-actions">
+                  <button class="action-btn edit" (click)="toggleAddModal(tx)" title="Edit">✏️</button>
+                  <button class="action-btn delete" (click)="confirmDelete(tx.id)" title="Delete">🗑️</button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty-state">No transactions found.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
 
-        <section class="glass glass-card table-container animate-fade">
-          <table class="history-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Description</th>
-                <th>Category</th>
-                <th>Type</th>
-                <th>Amount</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (tx of transactions(); track tx.id) {
-                <tr>
-                  <td>{{ tx.date | date:'mediumDate' }}</td>
-                  <td>{{ tx.description }}</td>
-                  <td><span class="category-tag">{{ tx.category }}</span></td>
-                  <td>
-                    <span class="type-tag" [class.income]="tx.type === 'INCOME'">
-                      {{ tx.type }}
-                    </span>
-                  </td>
-                  <td class="amount-cell" [class.negative]="tx.type === 'EXPENSE'">
-                    {{ tx.type === 'INCOME' ? '+' : '-' }}{{ tx.amount | currency:'INR':'symbol-narrow' }}
-                  </td>
-                  <td>
-                    <div class="tx-actions">
-                      <button class="action-btn edit" (click)="toggleAddModal(tx)" title="Edit">✏️</button>
-                      <button class="action-btn delete" (click)="confirmDelete(tx.id)" title="Delete">🗑️</button>
-                    </div>
-                  </td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="6" class="empty-state">No transactions found.</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </section>
-
-        <!-- Edit Modal Reused -->
-        @if (showAddModal()) {
-          <app-add-transaction 
-            [transactionToEdit]="selectedTransaction()"
-            (onClose)="toggleAddModal()" 
-            (onSaved)="loadData()">
-          </app-add-transaction>
-        }
-      </main>
-    </div>
+    <!-- Edit Modal Reused -->
+    @if (showAddModal()) {
+      <app-add-transaction 
+        [transactionToEdit]="selectedTransaction()"
+        (onClose)="toggleAddModal()" 
+        (onSaved)="loadData()">
+      </app-add-transaction>
+    }
 
     <style>
-      /* Reusing layout styles */
-      .layout { display: flex; min-height: 100vh; }
-      .main-content { flex: 1; padding: 48px; max-width: 1200px; margin: 0 auto; }
-      
       .page-header { margin-bottom: 40px; }
       .accent { color: var(--accent-emerald); }
+      .subtitle { color: var(--text-secondary); margin-top: 4px; }
       
       .table-container { padding: 0; overflow: hidden; }
       .history-table { width: 100%; border-collapse: collapse; text-align: left; }
@@ -90,9 +88,15 @@ import { AddTransactionComponent } from '../dashboard/add-transaction.component'
       .type-tag { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; background: rgba(244, 63, 94, 0.1); color: var(--accent-rose); }
       .type-tag.income { background: rgba(16, 185, 129, 0.1); color: var(--accent-emerald); }
       
+      .limit-tag { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; background: rgba(234, 179, 8, 0.1); color: #eab308; border: 1px dashed rgba(234, 179, 8, 0.3); cursor: pointer; transition: 0.2s; }
+      .limit-tag:hover { background: rgba(234, 179, 8, 0.2); }
+
       .amount-cell { font-weight: 700; }
       .amount-cell.negative { color: var(--accent-rose); }
       .empty-state { text-align: center; padding: 60px; color: var(--text-secondary); }
+
+      .set-limit-btn { background: transparent; border: 1px solid var(--glass-border); color: var(--text-secondary); border-radius: 6px; padding: 4px 8px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
+      .set-limit-btn:hover { color: var(--accent-emerald); border-color: var(--accent-emerald); }
 
       /* Action Buttons */
       .tx-actions { display: flex; gap: 8px; }
@@ -104,6 +108,7 @@ import { AddTransactionComponent } from '../dashboard/add-transaction.component'
       .action-btn.edit:hover { color: var(--accent-emerald); }
       .action-btn.delete:hover { color: var(--accent-rose); }
     </style>
+
   `
 })
 export class HistoryComponent implements OnInit {
@@ -136,6 +141,25 @@ export class HistoryComponent implements OnInit {
           alert('Failed to delete transaction');
         }
       });
+    }
+  }
+
+  promptLimit(tx: Transaction) {
+    const currentVal = tx.expenseLimit ? tx.expenseLimit.toString() : '';
+    const userInput = prompt(`Set an alert limit for '${tx.description}' (₹):\nType 0 or leave blank to remove limit.`, currentVal);
+    if (userInput !== null) {
+      const limit = Number(userInput);
+      if (!isNaN(limit) && limit >= 0) {
+        const updatedTx = { ...tx, expenseLimit: (limit === 0 || userInput.trim() === '') ? undefined : limit };
+        if (tx.id) {
+          this.txService.updateTransaction(tx.id, updatedTx).subscribe({
+            next: () => this.loadData(),
+            error: () => alert('Failed to set limit. Check backend connection.')
+          });
+        }
+      } else {
+        alert('Please enter a valid number.');
+      }
     }
   }
 }

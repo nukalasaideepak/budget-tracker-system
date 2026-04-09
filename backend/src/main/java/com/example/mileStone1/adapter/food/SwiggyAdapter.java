@@ -5,6 +5,7 @@ import com.example.mileStone1.model.PriceResult;
 import com.example.mileStone1.model.SearchRequest;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -12,22 +13,24 @@ import java.util.concurrent.ThreadLocalRandom;
 public class SwiggyAdapter implements ProviderAdapter {
 
     @Override
-    public PriceResult fetchPrice(SearchRequest request) {
+    public List<PriceResult> fetchPrice(SearchRequest request) {
         PriceResult result = new PriceResult();
         result.setProviderName(getProviderName());
         result.setDomainName(getDomainName());
-        result.setPrice(randomPrice(150, 600));
-        result.setEta(randomInt(20, 45) + " mins");
+        int geoHash = getGeoHashModifier(request);
+        
+        result.setPrice(randomPrice(150, 600) + (geoHash * 10));
+        result.setEta((20 + geoHash * 5) + " mins");
         result.setRating(4.4);
         result.setLogoUrl("https://logo.clearbit.com/swiggy.com");
         result.setBaseUrl("https://www.swiggy.com");
         result.setTagline("What's on your mind?");
         result.setMetadata(Map.of(
-            "deliveryFee", "₹" + randomInt(15, 50),
+            "deliveryFee", "₹" + (15 + geoHash * 8),
             "discount", randomInt(1, 5) > 3 ? "20% OFF up to ₹100" : "Free Delivery",
             "restaurant", request.getQuery() != null ? request.getQuery() : "Popular Restaurant"
         ));
-        return result;
+        return List.of(result);
     }
 
     @Override
@@ -42,5 +45,13 @@ public class SwiggyAdapter implements ProviderAdapter {
 
     private int randomInt(int min, int max) {
         return ThreadLocalRandom.current().nextInt(min, max + 1);
+    }
+
+    private int getGeoHashModifier(SearchRequest request) {
+        if (request.getFromLat() != null && request.getFromLng() != null) {
+            int hash = Math.abs(String.format("%.3f,%.3f", request.getFromLat(), request.getFromLng()).hashCode());
+            return (hash % 5); // 0 to 4
+        }
+        return randomInt(0, 4);
     }
 }

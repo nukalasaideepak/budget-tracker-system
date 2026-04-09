@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -33,33 +34,14 @@ public class SecurityConfig {
 
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
                 .csrf(csrf -> csrf.disable())
-
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
-                        .requestMatchers("/auth/**").permitAll()
-
-                        // Protected endpoints — require valid JWT
-                        .requestMatchers("/transactions/**").authenticated()
-                        .requestMatchers("/budget/**").authenticated()
-                        .requestMatchers("/admin/**").authenticated()
-                        .requestMatchers("/user/**").authenticated()
-                        .requestMatchers("/api/profile/**").authenticated()
-                        .requestMatchers("/api/export/**").authenticated()
-                        .requestMatchers("/api/forum/**").authenticated()
-                        .requestMatchers("/api/compare/**").authenticated()
-                        .requestMatchers("/api/domains/**").authenticated()
-                        .requestMatchers("/api/alerts/**").authenticated()
-                        .requestMatchers("/api/savings-goals/**").authenticated()
+                        .requestMatchers("/auth/**", "/verify-email/**", "/api/compare/**", "/api/domains/**").permitAll()
                         .anyRequest().authenticated()
                 )
-
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()))
-
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -68,10 +50,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:4200"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
+        config.setExposedHeaders(List.of("Authorization", "Content-Type"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

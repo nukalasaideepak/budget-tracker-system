@@ -6,155 +6,143 @@ import { RouterLink } from '@angular/router';
 import { SavingsGoalService, SavingsGoal } from '../services/savings-goal.service';
 import { FormsModule } from '@angular/forms';
 
-import { SidebarComponent } from '../sidebar/sidebar.component';
-
 @Component({
   selector: 'app-savings',
   standalone: true,
-  imports: [CommonModule, RouterLink, SidebarComponent, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule],
   template: `
-    <div class="layout">
-      <!-- Shared Sidebar -->
-      <app-sidebar></app-sidebar>
+    <header class="page-header">
+      <h1>Savings & <span class="accent">Goals</span></h1>
+      <p class="subtitle">Track your progress toward financial freedom.</p>
+    </header>
 
-      <main class="main-content">
-        <header class="page-header">
-          <h1>Savings & <span class="accent">Goals</span></h1>
-          <p class="subtitle">Track your progress toward financial freedom.</p>
-        </header>
-
-        <!-- Savings Goals Section -->
-        <section class="savings-goals-section animate-fade" style="animation-delay: 0.15s">
-          <div class="section-header">
-            <h2>Savings Goals</h2>
-            <button class="btn btn-primary" (click)="openAddModal()">+ Add Goal</button>
-          </div>
-          
-          <div class="goals-list-grid">
-            @for (goal of savingsGoals(); track goal.id) {
-              <div class="glass glass-card goal-item-card">
-                <div class="goal-item-header">
-                  <div class="goal-top-info">
-                    <div class="category-info">
-                      <span class="category-icon">{{ getCategoryIcon(goal.category) }}</span>
-                      <span class="category-badge">{{ goal.category || 'Goal' }}</span>
-                    </div>
-                    <h4>{{ goal.goalName }}</h4>
-                    <span class="goal-target">{{ goal.targetAmount | currency:'INR':'symbol-narrow' }}</span>
-                  </div>
-                  <div class="item-actions">
-                    <button class="btn-icon edit-btn" (click)="openEditModal(goal)" title="Edit">✏️</button>
-                    <button class="btn-icon delete-btn" (click)="deleteGoal(goal.id!)" title="Delete">🗑️</button>
-                  </div>
+    <!-- Savings Goals Section -->
+    <section class="savings-goals-section animate-fade" style="animation-delay: 0.15s">
+      <div class="section-header">
+        <h2>Savings Goals</h2>
+        <button class="btn btn-primary" (click)="openAddModal()">+ Add Goal</button>
+      </div>
+      
+      <div class="goals-list-grid">
+        @for (goal of savingsGoals(); track goal.id) {
+          <div class="glass glass-card goal-item-card">
+            <div class="goal-item-header">
+              <div class="goal-top-info">
+                <div class="category-info">
+                  <span class="category-icon">{{ getCategoryIcon(goal.category) }}</span>
+                  <span class="category-badge">{{ goal.category || 'Goal' }}</span>
                 </div>
-                
-                <div class="progress-container">
-                  <div class="progress-bar">
-                    <div class="fill" [style.width.%]="(goal.currentAmount / goal.targetAmount) * 100"></div>
-                  </div>
-                  <div class="progress-stats">
-                    <span>Saved: {{ goal.currentAmount | currency:'INR':'symbol-narrow' }}</span>
-                    <span>{{ (goal.currentAmount / goal.targetAmount) * 100 | number:'1.0-0' }}%</span>
-                  </div>
-                </div>
-
-                @if (goal.monthlyAllocationPercentage) {
-                  <div class="goal-allocation-badge">
-                    <span>Monthly Target: {{ goal.monthlyAllocationPercentage }}% of income</span>
-                  </div>
-                }
-
-                @if (goal.targetDate) {
-                  <div class="goal-footer">
-                    <span class="deadline">📅 Target: {{ goal.targetDate | date:'mediumDate' }}</span>
-                    <span class="days-left" [class.urgent]="isUrgent(goal.targetDate)">
-                      {{ getDaysRemaining(goal.targetDate) }} days left
-                    </span>
-                  </div>
-                }
+                <h4>{{ goal.goalName }}</h4>
+                <span class="goal-target">{{ goal.targetAmount | currency:'INR':'symbol-narrow' }}</span>
               </div>
-            } @empty {
-              <div class="glass glass-card empty-goals">
-                <p>No savings goals yet. Start planning for your future!</p>
+              <div class="item-actions">
+                <button class="btn-icon edit-btn" (click)="openEditModal(goal)" title="Edit">✏️</button>
+                <button class="btn-icon delete-btn" (click)="deleteGoal(goal.id!)" title="Delete">🗑️</button>
+              </div>
+            </div>
+            
+            <div class="progress-container">
+              <div class="progress-bar">
+                <div class="fill" [style.width.%]="(goal.currentAmount / goal.targetAmount) * 100"></div>
+              </div>
+              <div class="progress-stats">
+                <span>Saved: {{ goal.currentAmount | currency:'INR':'symbol-narrow' }}</span>
+                <span>{{ (goal.currentAmount / goal.targetAmount) * 100 | number:'1.0-0' }}%</span>
+              </div>
+            </div>
+
+            @if (goal.monthlyAllocationPercentage) {
+              <div class="goal-allocation-badge">
+                <span>Monthly Target: {{ goal.monthlyAllocationPercentage }}% of income</span>
+              </div>
+            }
+
+            @if (goal.targetDate) {
+              <div class="goal-footer">
+                <span class="deadline">📅 Target: {{ goal.targetDate | date:'mediumDate' }}</span>
+                <span class="days-left" [class.urgent]="isUrgent(goal.targetDate)">
+                  {{ getDaysRemaining(goal.targetDate) }} days left
+                </span>
               </div>
             }
           </div>
-        </section>
-
-      </main>
-
-      <!-- Add Goal Modal -->
-      @if (showGoalModal) {
-        <div class="modal-overlay" (click)="closeModal()">
-          <div class="glass glass-card modal-content" (click)="$event.stopPropagation()">
-            <div class="modal-header">
-              <h3>{{ isEditing ? 'Edit' : 'Create' }} <span class="accent">{{ isEditing ? 'Goal' : 'New Goal' }}</span></h3>
-              <button class="btn-icon" (click)="closeModal()">✕</button>
-            </div>
-            <form (submit)="saveGoal(); $event.preventDefault()" class="modal-form">
-              <div class="form-group">
-                <label>Goal Name</label>
-                <input type="text" [(ngModel)]="newGoal.goalName" name="goalName" placeholder="e.g., Summer Trip, Wedding Fund" required>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Category</label>
-                  <select [(ngModel)]="newGoal.category" name="category" class="glass-select">
-                    <option value="Vacation">✈️ Vacation</option>
-                    <option value="Home">🏠 Home</option>
-                    <option value="Car">🚗 Car</option>
-                    <option value="Education">🎓 Education</option>
-                    <option value="Emergency">🏥 Emergency Fund</option>
-                    <option value="Savings">💰 General Savings</option>
-                    <option value="Other">🏷️ Other</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Target Date</label>
-                  <input type="date" [(ngModel)]="newGoal.targetDate" name="targetDate">
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Target Amount</label>
-                  <input type="number" [(ngModel)]="newGoal.targetAmount" name="targetAmount" placeholder="0.00" required>
-                </div>
-                <div class="form-group">
-                  <label>Current Status</label>
-                  <input type="number" [(ngModel)]="newGoal.currentAmount" name="currentAmount" placeholder="0.00">
-                </div>
-              </div>
-
-              <!-- New Monthly Allocation Section -->
-              <div class="form-group" style="margin-top: 20px;">
-                <label class="allocation-label">Monthly Allocation (%)</label>
-                <div class="allocation-control">
-                  <input type="range" [(ngModel)]="newGoal.monthlyAllocationPercentage" name="allocation" min="0" max="100" step="1" class="allocation-slider">
-                  <span class="percentage-display">{{ newGoal.monthlyAllocationPercentage }}%</span>
-                </div>
-                @if (profile()) {
-                  <p class="allocation-calc">
-                    ≈ {{ (newGoal.monthlyAllocationPercentage || 0) / 100 * (profile()?.income || 0) | currency:'INR':'symbol-narrow' }} from your monthly income
-                  </p>
-                }
-              </div>
-
-              <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
-                <button type="submit" class="btn btn-primary">{{ isEditing ? 'Save Changes' : 'Create Goal' }}</button>
-              </div>
-            </form>
+        } @empty {
+          <div class="glass glass-card empty-goals">
+            <p>No savings goals yet. Start planning for your future!</p>
           </div>
+        }
+      </div>
+    </section>
+
+    <!-- Add Goal Modal -->
+    @if (showGoalModal) {
+      <div class="modal-overlay" (click)="closeModal()">
+        <div class="glass glass-card modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>{{ isEditing ? 'Edit' : 'Create' }} <span class="accent">{{ isEditing ? 'Goal' : 'New Goal' }}</span></h3>
+            <button class="btn-icon" (click)="closeModal()">✕</button>
+          </div>
+          <form (submit)="saveGoal(); $event.preventDefault()" class="modal-form">
+            <div class="form-group">
+              <label>Goal Name</label>
+              <input type="text" [(ngModel)]="newGoal.goalName" name="goalName" placeholder="e.g., Summer Trip, Wedding Fund" required>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Category</label>
+                <select [(ngModel)]="newGoal.category" name="category" class="glass-select">
+                  <option value="Vacation">✈️ Vacation</option>
+                  <option value="Home">🏠 Home</option>
+                  <option value="Car">🚗 Car</option>
+                  <option value="Education">🎓 Education</option>
+                  <option value="Emergency">🏥 Emergency Fund</option>
+                  <option value="Savings">💰 General Savings</option>
+                  <option value="Other">🏷️ Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Target Date</label>
+                <input type="date" [(ngModel)]="newGoal.targetDate" name="targetDate">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Target Amount</label>
+                <input type="number" [(ngModel)]="newGoal.targetAmount" name="targetAmount" placeholder="0.00" required>
+              </div>
+              <div class="form-group">
+                <label>Current Status</label>
+                <input type="number" [(ngModel)]="newGoal.currentAmount" name="currentAmount" placeholder="0.00">
+              </div>
+            </div>
+
+            <!-- New Monthly Allocation Section -->
+            <div class="form-group" style="margin-top: 20px;">
+              <label class="allocation-label">Monthly Allocation (%)</label>
+              <div class="allocation-control">
+                <input type="range" [(ngModel)]="newGoal.monthlyAllocationPercentage" name="allocation" min="0" max="100" step="1" class="allocation-slider">
+                <span class="percentage-display">{{ newGoal.monthlyAllocationPercentage }}%</span>
+              </div>
+              @if (profile()) {
+                <p class="allocation-calc">
+                  ≈ {{ (newGoal.monthlyAllocationPercentage || 0) / 100 * (profile()?.income || 0) | currency:'INR':'symbol-narrow' }} from your monthly income
+                </p>
+              }
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">{{ isEditing ? 'Save Changes' : 'Create Goal' }}</button>
+            </div>
+          </form>
         </div>
-      }
-    </div>
+      </div>
+    }
 
     <style>
-    /* Layout & Base */
-    .layout { display: flex; min-height: 100vh; }
-    .main-content { flex: 1; padding: 48px; max-width: 1400px; margin: 0 auto; }
+    /* Savings Specific Styles */
     .page-header { margin-bottom: 40px; }
     .subtitle { color: var(--text-secondary); margin-top: 4px; }
     .accent { color: var(--accent-emerald); }
@@ -201,19 +189,13 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
     
     .goal-allocation-badge { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 8px 12px; border-radius: 10px; margin-top: 16px; font-size: 0.75rem; color: var(--accent-emerald); font-weight: 600; text-align: center; }
 
-    /* Savings Goals List */
-    .savings-goals-section { margin-top: 56px; }
-
     /* Buttons */
     .btn { padding: 12px 24px; border-radius: 14px; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; }
     .btn-primary { background: var(--accent-emerald); color: var(--bg-dark); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2); }
     .btn-primary:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3); }
     .btn-secondary { background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid var(--glass-border); }
     .btn-secondary:hover { background: rgba(255, 255, 255, 0.1); }
-    .btn-icon { background: rgba(255, 255, 255, 0.05); border: none; border-radius: 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; color: var(--text-secondary); }
-    .btn-icon:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-primary); }
-    .delete-btn:hover { color: var(--accent-rose); background: rgba(244, 63, 94, 0.1); }
-
+    
     /* Modal Styles */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 2000; animation: fadeIn 0.3s ease; }
     .modal-content { width: 100%; max-width: 500px; padding: 40px; border-radius: 24px; border: 1px solid var(--glass-border); }
@@ -236,6 +218,7 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
+
   `
 })
 export class SavingsComponent implements OnInit {
@@ -311,7 +294,7 @@ export class SavingsComponent implements OnInit {
       currentAmount: currentAmount,
       username: this.profile()!.username,
       category: this.newGoal.category,
-      targetDate: this.newGoal.targetDate || '',
+      targetDate: this.newGoal.targetDate || undefined,
       monthlyAllocationPercentage: Number(this.newGoal.monthlyAllocationPercentage || 0)
     };
 
@@ -327,7 +310,8 @@ export class SavingsComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error saving goal:', err);
-        alert('Failed to save goal. Please check your inputs.');
+        const errorMsg = err.error?.message || err.message || 'Server connection error';
+        alert(`Failed to save goal: ${errorMsg}. Please ensure all fields are correct.`);
       }
     });
   }

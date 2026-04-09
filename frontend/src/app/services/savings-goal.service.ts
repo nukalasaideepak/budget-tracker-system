@@ -13,11 +13,13 @@ export interface SavingsGoal {
   monthlyAllocationPercentage?: number;
 }
 
+import { environment } from '../../environments/environment';
+
 @Injectable({
   providedIn: 'root'
 })
 export class SavingsGoalService {
-  private apiUrl = 'http://localhost:8082/api/savings-goals';
+  private apiUrl = `${environment.apiUrl}/api/savings-goals`;
 
   constructor(private http: HttpClient) {}
 

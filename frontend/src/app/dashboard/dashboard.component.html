@@ -1,148 +1,146 @@
-<div class="layout">
-  <!-- Sidebar -->
-  <app-sidebar></app-sidebar>
+<header class="top-nav animate-fade">
+  <div class="greeting">
+    <h1>Welcome Back, <span class="accent">{{ (profile()?.username || 'Member').split(' ')[0] }}</span></h1>
+    <p class="subtitle">Here's what's happening with your money today.</p>
+  </div>
+  <div class="actions">
+    <!-- Removed Add Transaction Button as per user request -->
+  </div>
+</header>
 
-  <!-- Main Content -->
-  <main class="main-content">
-    <header class="top-nav animate-fade">
-      <div class="greeting">
-        <h1>Welcome Back, <span class="accent">{{ (profile()?.username || 'Member').split(' ')[0] }}</span></h1>
-        <p class="subtitle">Here's what's happening with your money today.</p>
-      </div>
-      <div class="actions">
-        <!-- Removed Add Transaction Button as per user request -->
-      </div>
-    </header>
+<section class="stats-grid">
+  <div class="glass glass-card animate-fade" style="animation-delay: 0.1s">
+    <p class="label">Total Balance</p>
+    <h2 class="value">{{ totalBalance() | currency:'INR':'symbol-narrow' }}</h2>
+    @if (totalBalance() > 0) {
+      <p class="trend up">+ Overall health</p>
+    } @else if (totalBalance() < 0) {
+      <p class="trend negative" style="color: var(--accent-rose)">- Overdrawn</p>
+    }
+  </div>
+  <div class="glass glass-card animate-fade" style="animation-delay: 0.2s">
+    <p class="label">Monthly Income</p>
+    <h2 class="value" style="color: var(--accent-emerald)">{{ monthlyIncome() | currency:'INR':'symbol-narrow' }}</h2>
+    <div class="progress-bar"><div class="fill" style="width: 100%; background: var(--accent-emerald)"></div></div>
+  </div>
+  <div class="glass glass-card animate-fade" style="animation-delay: 0.3s">
+    <p class="label">Monthly Expenses</p>
+    <h2 class="value" style="color: var(--accent-rose)">{{ monthlyExpenses() | currency:'INR':'symbol-narrow' }}</h2>
+    <div class="progress-bar"><div class="fill" [style.width.%]="monthlyIncome() > 0 ? (monthlyExpenses() / monthlyIncome() * 100) : 0" style="background: var(--accent-rose)"></div></div>
+  </div>
+  <div class="glass glass-card animate-fade" style="animation-delay: 0.4s; border-bottom: 3px solid #3b82f6;">
+    <p class="label">Monthly Savings</p>
+    <h2 class="value" style="color: #3b82f6;">{{ monthlySavingsSurplus() | currency:'INR':'symbol-narrow' }}</h2>
+    @if (monthlySavingsSurplus() > 0) {
+      <p class="trend up" style="color: #3b82f6;">+ Great job! Saving well.</p>
+    } @else {
+      <p class="trend" style="color: var(--text-secondary);">Focus on saving more.</p>
+    }
+  </div>
+</section>
 
-    <section class="stats-grid">
-      <div class="glass glass-card animate-fade" style="animation-delay: 0.1s">
-        <p class="label">Total Balance</p>
-        <h2 class="value">{{ totalBalance() | currency:'INR':'symbol-narrow' }}</h2>
-        @if (totalBalance() > 0) {
-          <p class="trend up">+ Balance available</p>
-        } @else if (totalBalance() < 0) {
-          <p class="trend negative" style="color: var(--accent-rose)">- Overdrawn</p>
-        }
-      </div>
-      <div class="glass glass-card animate-fade" style="animation-delay: 0.2s">
-        <p class="label">Total Income</p>
-        <h2 class="value" style="color: var(--accent-emerald)">{{ totalIncome() | currency:'INR':'symbol-narrow' }}</h2>
-        <div class="progress-bar"><div class="fill" style="width: 80%; background: var(--accent-emerald)"></div></div>
-      </div>
-      <div class="glass glass-card animate-fade" style="animation-delay: 0.3s">
-        <p class="label">Total Expenses</p>
-        <h2 class="value" style="color: var(--accent-rose)">{{ totalExpenses() | currency:'INR':'symbol-narrow' }}</h2>
-        <div class="progress-bar"><div class="fill" [style.width.%]="(profile()?.savings || 0) / (profile()?.income || 1) * 100" style="background: var(--accent-rose)"></div></div>
-      </div>
-    </section>
+<!-- Quick Add Section (Middle) -->
+<section class="glass glass-card quick-add animate-fade" style="animation-delay: 0.4s">
+  <div class="section-header">
+    <h3>Quick Add Expense</h3>
+    <p class="subtitle-sm">Save your daily spend instantly</p>
+  </div>
+  <form [formGroup]="quickAddForm" (ngSubmit)="onQuickAdd()" class="quick-form">
+    <div class="input-group">
+      <span class="currency">₹</span>
+      <input type="number" formControlName="amount" placeholder="Amount">
+    </div>
 
-    <!-- Quick Add Section (Middle) -->
-    <section class="glass glass-card quick-add animate-fade" style="animation-delay: 0.4s">
-      <div class="section-header">
-        <h3>Quick Add Expense</h3>
-        <p class="subtitle-sm">Save your daily spend instantly</p>
+    <div class="input-group">
+      <select formControlName="type" class="type-select">
+        <option value="" disabled selected hidden>TYPE</option>
+        <option value="EXPENSE">Expense</option>
+        <option value="INCOME">Income</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <select formControlName="category">
+        <option value="" disabled selected hidden>CATEGORY</option>
+        <option value="Food">🍔 Food</option>
+        <option value="Groceries">🛒 Groceries</option>
+        <option value="Entertainment">🎬 Entertainment</option>
+        <option value="Shopping">🛍️ Shopping</option>
+        <option value="Transportation">🚗 Transportation</option>
+        <option value="Travel">✈️ Travel</option>
+        <option value="Rent">🏠 Rent/Bills</option>
+        <option value="Salary">💰 Salary</option>
+        <option value="Others">📦 Others</option>
+      </select>
+    </div>
+
+    @if (isOtherSelected()) {
+      <div class="input-group animate-slide-in">
+        <label class="input-label">Detail</label>
+        <input type="text" formControlName="description" placeholder="Specify detail...">
       </div>
-      <form [formGroup]="quickAddForm" (ngSubmit)="onQuickAdd()" class="quick-form">
-        <div class="input-group">
-          <span class="currency">₹</span>
-          <input type="number" formControlName="amount" placeholder="Amount">
+    }
+
+    @if (quickAddForm.get('type')?.value === 'EXPENSE') {
+      <div class="input-group animate-slide-in">
+        <label class="input-label">Alert Limit (₹)</label>
+        <input type="number" formControlName="expenseLimit" placeholder="Optional limit">
+      </div>
+    }
+
+    <button type="submit" class="btn btn-primary" [disabled]="quickAddForm.invalid">
+      Add
+    </button>
+  </form>
+</section>
+
+
+<!-- Recent Transactions (Bottom) -->
+<section class="glass glass-card transactions animate-fade" style="animation-delay: 0.7s">
+  <div class="section-header">
+    <h3>Recent Transactions</h3>
+    <button class="btn-text" routerLink="/history">View All</button>
+  </div>
+  <div class="transaction-list">
+    @for (tx of transactions(); track tx.id) {
+      <div class="transaction-item">
+        <div class="tx-icon">💰</div>
+        <div class="tx-details">
+          <p class="tx-title">{{ tx.description }}</p>
+          <p class="tx-date">{{ tx.date | date }}</p>
         </div>
-
-        <div class="input-group">
-          <select formControlName="type" class="type-select">
-            <option value="" disabled selected hidden>TYPE</option>
-            <option value="EXPENSE">Expense</option>
-            <option value="INCOME">Income</option>
-          </select>
+        <div class="tx-amount" [class.negative]="tx.type === 'EXPENSE'">
+          {{ tx.type === 'INCOME' ? '+' : '-' }}{{ tx.amount | currency:'INR':'symbol-narrow' }}
         </div>
-
-        <div class="input-group">
-          <select formControlName="category">
-            <option value="" disabled selected hidden>CATEGORY</option>
-            <option value="Food">🍔 Food</option>
-            <option value="Groceries">🛒 Groceries</option>
-            <option value="Entertainment">🎬 Entertainment</option>
-            <option value="Shopping">🛍️ Shopping</option>
-            <option value="Transportation">🚗 Transportation</option>
-            <option value="Travel">✈️ Travel</option>
-            <option value="Rent">🏠 Rent/Bills</option>
-            <option value="Salary">💰 Salary</option>
-            <option value="Others">📦 Others</option>
-          </select>
+        <div class="tx-actions">
+          <button class="action-btn edit" (click)="toggleAddModal(tx)" title="Edit">✏️</button>
+          <button class="action-btn delete" (click)="confirmDelete(tx.id)" title="Delete">🗑️</button>
         </div>
-
-        @if (isOtherSelected()) {
-          <div class="input-group animate-slide-in">
-            <label class="input-label">Detail</label>
-            <input type="text" formControlName="description" placeholder="Specify detail...">
-          </div>
-        }
-
-        <button type="submit" class="btn btn-primary" [disabled]="quickAddForm.invalid">
-          Add
-        </button>
-      </form>
-    </section>
-
-
-    <!-- Recent Transactions (Bottom) -->
-    <section class="glass glass-card transactions animate-fade" style="animation-delay: 0.7s">
-      <div class="section-header">
-        <h3>Recent Transactions</h3>
-        <button class="btn-text" routerLink="/history">View All</button>
       </div>
-      <div class="transaction-list">
-        @for (tx of transactions(); track tx.id) {
-          <div class="transaction-item">
-            <div class="tx-icon">💰</div>
-            <div class="tx-details">
-              <p class="tx-title">{{ tx.description }}</p>
-              <p class="tx-date">{{ tx.date | date }}</p>
-            </div>
-            <div class="tx-amount" [class.negative]="tx.type === 'EXPENSE'">
-              {{ tx.type === 'INCOME' ? '+' : '-' }}{{ tx.amount | currency:'INR':'symbol-narrow' }}
-            </div>
-            <div class="tx-actions">
-              <button class="action-btn edit" (click)="toggleAddModal(tx)" title="Edit">✏️</button>
-              <button class="action-btn delete" (click)="confirmDelete(tx.id)" title="Delete">🗑️</button>
-            </div>
-          </div>
-        } @empty {
-          <div style="text-align: center; color: var(--text-secondary); padding: 40px;">
-            No transactions found. Log your first expense above!
-          </div>
-        }
+    } @empty {
+      <div style="text-align: center; color: var(--text-secondary); padding: 40px;">
+        No transactions found. Log your first expense above!
       </div>
-    </section>
-  </main>
+    }
+  </div>
+</section>
 
-  <!-- Add Transaction Modal -->
-  @if (showAddModal()) {
-    <app-add-transaction 
-      [transactionToEdit]="selectedTransaction()"
-      (onClose)="toggleAddModal()" 
-      (onSaved)="loadData()">
-    </app-add-transaction>
-  }
+<!-- Finance Advice Chat Box -->
+<div style="position: fixed; bottom: 32px; right: 32px; z-index: 1000;">
+  <app-chat-box></app-chat-box>
 </div>
 
+<!-- Add Transaction Modal -->
+@if (showAddModal()) {
+  <app-add-transaction 
+    [transactionToEdit]="selectedTransaction()"
+    (onClose)="toggleAddModal()" 
+    (onSaved)="loadData()">
+  </app-add-transaction>
+}
+
 <style>
-/* Dashboard Specific Styles (Inherited from Global but with UI tweaks) */
-.layout { display: flex; min-height: 100vh; }
-.sidebar { width: var(--sidebar-width); height: 100vh; position: sticky; top: 0; display: flex; flex-direction: column; padding: 32px 0; border-right: 1px solid var(--glass-border); }
-.sidebar-header { padding: 0 32px 40px; }
-.brand { font-size: 1.5rem; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, var(--accent-emerald), var(--accent-violet)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.sidebar-nav { padding: 0 16px; flex: 1; }
-.nav-link { display: flex; align-items: center; padding: 12px 16px; color: var(--text-secondary); text-decoration: none; border-radius: 12px; margin-bottom: 4px; transition: all 0.2s; font-weight: 500; }
-.nav-link .icon { margin-right: 12px; font-size: 1.2rem; }
-.nav-link:hover, .nav-link.active { color: var(--text-primary); background: rgba(255, 255, 255, 0.05); }
-.nav-link.active { background: rgba(16, 185, 129, 0.1); color: var(--accent-emerald); }
-.sidebar-footer { padding: 24px 16px; border-top: 1px solid var(--glass-border); }
-.profile-card { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 16px; }
-.avatar { width: 40px; height: 40px; border-radius: 12px; background: var(--accent-emerald); display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--bg-dark); }
-.name { font-weight: 600; font-size: 0.9rem; }
-.status { font-size: 0.75rem; color: var(--text-secondary); }
-.main-content { flex: 1; padding: 48px; max-width: 1400px; margin: 0 auto; }
+/* Dashboard Specific Styles - Shell styles removed as they are now global */
 .top-nav { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 48px; }
 .subtitle { color: var(--text-secondary); margin-top: 4px; }
 .accent { color: var(--accent-emerald); }
@@ -153,14 +151,7 @@
 .trend.up { color: var(--accent-emerald); }
 .progress-bar { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.05); border-radius: 10px; margin-top: 16px; overflow: hidden; }
 .fill { height: 100%; border-radius: 10px; }
-.content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 48px; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.showcase { display: flex; align-items: center; justify-content: center; text-align: center; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(139, 92, 246, 0.1)); border: 1px dashed var(--accent-emerald); border-radius: 24px; padding: 24px; }
-.showcase h4 { color: var(--accent-emerald); margin-bottom: 8px; }
-.showcase p { font-size: 0.85rem; color: var(--text-secondary); max-width: 200px; margin: 0 auto; }
-
-/* Transactions at bottom focus */
-.transactions { margin-top: 24px; }
 
 .btn { padding: 12px 24px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .btn-primary { background: var(--accent-emerald); color: var(--bg-dark); }
@@ -187,8 +178,6 @@
 .tx-date { font-size: 0.75rem; color: var(--text-secondary); }
 .tx-amount { font-weight: 700; }
 .tx-amount.negative { color: var(--accent-rose); }
-.budget-items { display: flex; flex-direction: column; gap: 24px; }
-.budget-info { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 500; }
 
 /** Quick Add Styles **/
 .quick-add { margin-top: 48px; padding: 32px; }
@@ -225,3 +214,4 @@
   to { opacity: 1; transform: translateX(0); }
 }
 </style>
+

@@ -1,11 +1,9 @@
 package com.example.mileStone1.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
 
 @Entity
 @Table(name = "price_alerts")
-@Data
 public class PriceAlert {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,4 +27,15 @@ public class PriceAlert {
         this.query = query;
         this.targetPrice = targetPrice;
     }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getQuery() { return query; }
+    public void setQuery(String query) { this.query = query; }
+    public double getTargetPrice() { return targetPrice; }
+    public void setTargetPrice(double targetPrice) { this.targetPrice = targetPrice; }
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
 }

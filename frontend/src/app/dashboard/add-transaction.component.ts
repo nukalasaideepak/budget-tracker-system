@@ -54,6 +54,13 @@ import { AuthService } from '../services/auth.service';
             </div>
           }
 
+          @if (txForm.get('type')?.value === 'EXPENSE') {
+            <div class="form-group animate-slide-in">
+              <label>Notify me if expense exceeds (₹) - <i>Optional</i></label>
+              <input type="number" formControlName="expenseLimit" placeholder="No limit">
+            </div>
+          }
+
           <div class="modal-actions">
             <button type="button" class="btn btn-secondary" (click)="close()">Cancel</button>
             <button type="submit" class="btn btn-primary" [disabled]="loading() || txForm.invalid">
@@ -111,7 +118,8 @@ export class AddTransactionComponent implements OnInit {
     description: ['', [Validators.required]],
     category: ['Food', [Validators.required]],
     type: ['EXPENSE' as 'INCOME' | 'EXPENSE', [Validators.required]],
-    account: ['Cash']
+    account: ['Cash'],
+    expenseLimit: [null as number | null]
   });
 
   ngOnInit() {
@@ -122,7 +130,8 @@ export class AddTransactionComponent implements OnInit {
         description: editData.description,
         category: editData.category,
         type: editData.type,
-        account: editData.account
+        account: editData.account,
+        expenseLimit: editData.expenseLimit || null
       });
     }
   }

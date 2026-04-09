@@ -11,46 +11,39 @@ Chart.register(...registerables);
   standalone: true,
   imports: [CommonModule, SidebarComponent],
   template: `
-    <div class="layout">
-      <app-sidebar></app-sidebar>
+    <header class="page-header animate-fade">
+      <h1>Financial <span class="accent">Analytics</span></h1>
+      <p class="subtitle">Visualize your income and expenses over time.</p>
+    </header>
 
-      <main class="main-content">
-        <header class="page-header animate-fade">
-          <h1>Financial <span class="accent">Analytics</span></h1>
-          <p class="subtitle">Visualize your income and expenses over time.</p>
-        </header>
+    <section class="charts-container">
+      <!-- Monthly Comparison Chart -->
+      <div class="glass glass-card chart-card animate-fade">
+        <div class="chart-header">
+          <h3>Monthly Performance</h3>
+          <p>Comparison of Income vs Expenses by month</p>
+        </div>
+        <div class="canvas-wrapper">
+          <canvas #monthlyChart></canvas>
+        </div>
+      </div>
 
-        <section class="charts-container">
-          <!-- Monthly Comparison Chart -->
-          <div class="glass glass-card chart-card animate-fade">
-            <div class="chart-header">
-              <h3>Monthly Performance</h3>
-              <p>Comparison of Income vs Expenses by month</p>
-            </div>
-            <div class="canvas-wrapper">
-              <canvas #monthlyChart></canvas>
-            </div>
-          </div>
-
-          <!-- Category Distribution (Optional but nice) -->
-          <div class="glass glass-card chart-card animate-fade" style="animation-delay: 0.1s">
-            <div class="chart-header">
-              <h3>Expense Breakdown</h3>
-              <p>Top spending categories this month</p>
-            </div>
-            <div class="canvas-wrapper doughnut">
-              <canvas #categoryChart></canvas>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
+      <!-- Category Distribution (Optional but nice) -->
+      <div class="glass glass-card chart-card animate-fade" style="animation-delay: 0.1s">
+        <div class="chart-header">
+          <h3>Expense Breakdown</h3>
+          <p>Top spending categories this month</p>
+        </div>
+        <div class="canvas-wrapper doughnut">
+          <canvas #categoryChart></canvas>
+        </div>
+      </div>
+    </section>
 
     <style>
-      .layout { display: flex; min-height: 100vh; }
-      .main-content { flex: 1; padding: 48px; max-width: 1400px; margin: 0 auto; }
       .page-header { margin-bottom: 40px; }
       .accent { color: var(--accent-emerald); }
+      .subtitle { color: var(--text-secondary); margin-top: 4px; }
       
       .charts-container { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
       .chart-card { padding: 32px; min-height: 450px; display: flex; flex-direction: column; }
@@ -63,6 +56,7 @@ Chart.register(...registerables);
       
       canvas { width: 100% !important; height: 100% !important; }
     </style>
+
   `
 })
 export class ReportsComponent implements OnInit, AfterViewInit {

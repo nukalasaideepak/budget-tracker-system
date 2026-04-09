@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -10,10 +10,17 @@ import { AuthService } from '../services/auth.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   template: `
-    <div class="login-container">
-      <div class="login-card">
-        <h1>BudgetWise Login</h1>
-        <div *ngIf="errorSignal()" class="error-alert">{{ errorSignal() }}</div>
+    <div class="auth-container animate-fade">
+      <div class="glass glass-card auth-card">
+        <h1 class="brand" style="font-size: 2.5rem; margin-bottom: 8px; text-align: center;">BudgetWise</h1>
+        <h2 style="text-align: center; margin-bottom: 32px; font-weight: 500; color: var(--text-secondary);">Welcome Back</h2>
+        
+        @if (errorSignal()) {
+          <div class="error-msg">
+            {{ errorSignal() }}
+          </div>
+        }
+
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
           <div class="form-group">
             <label for="username">Username</label>
@@ -22,11 +29,7 @@ import { AuthService } from '../services/auth.service';
               type="text"
               formControlName="username"
               placeholder="Enter your username"
-              class="form-control"
             />
-            <div *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched" class="error">
-              Username is required
-            </div>
           </div>
 
           <div class="form-group">
@@ -35,137 +38,134 @@ import { AuthService } from '../services/auth.service';
               id="password"
               type="password"
               formControlName="password"
-              placeholder="Enter your password"
-              class="form-control"
+              placeholder="••••••••"
             />
-            <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="error">
-              Password is required
-            </div>
           </div>
 
-          <button type="submit" class="btn-primary" [disabled]="!loginForm.valid || loadingSignal()">
+          <button type="submit" class="btn btn-primary w-full" [disabled]="!loginForm.valid || loadingSignal()">
             {{ loadingSignal() ? 'Logging in...' : 'Login' }}
           </button>
         </form>
 
-        <div class="auth-links">
-          <p>Don't have an account? <a routerLink="/register">Register here</a></p>
+        <div class="auth-footer">
+          <p>Don't have an account? <a routerLink="/register">Register</a></p>
           <p><a routerLink="/reset-password">Forgot password?</a></p>
         </div>
       </div>
     </div>
   `,
   styles: [`
-    .login-container {
+    .auth-container { 
+      height: 100vh; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      padding: 24px;
+    }
+    
+    .auth-card { 
+      width: 100%; 
+      max-width: 440px; 
+      padding: 48px;
+    }
+
+    form { display: flex; flex-direction: column; gap: 24px; }
+    
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    
+    label { 
+      font-size: 0.9rem; 
+      font-weight: 600; 
+      color: var(--accent-emerald); 
+      text-transform: uppercase; 
+      letter-spacing: 1px;
+    }
+
+    input { 
+      width: 100%; 
+      padding: 14px 18px; 
+      background: rgba(255, 255, 255, 0.04); 
+      border: 1px solid var(--glass-border); 
+      border-radius: 14px; 
+      color: var(--text-primary); 
+      outline: none; 
+      transition: all 0.2s; 
+    }
+
+    input:focus { 
+      border-color: var(--accent-emerald); 
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    }
+
+    .btn { 
+      padding: 14px; 
+      border-radius: 14px; 
+      border: none; 
+      font-weight: 700; 
+      cursor: pointer; 
+      transition: all 0.2s; 
+      font-size: 1rem;
+    }
+
+    .btn-primary { 
+      background: var(--accent-emerald); 
+      color: var(--bg-dark); 
+    }
+
+    .btn-primary:hover:not(:disabled) { 
+      filter: brightness(1.1); 
+      transform: translateY(-2px);
+    }
+
+    .btn-primary:disabled { 
+      opacity: 0.5; 
+      cursor: not-allowed; 
+    }
+
+    .error-msg { 
+      padding: 12px; 
+      background: rgba(244, 63, 94, 0.1); 
+      color: var(--accent-rose); 
+      border: 1px solid rgba(244, 63, 94, 0.2); 
+      border-radius: 12px; 
+      margin-bottom: 24px; 
+      font-size: 0.85rem; 
+      text-align: center;
+    }
+
+    .auth-footer { 
+      margin-top: 32px; 
+      text-align: center; 
+      font-size: 0.9rem; 
+      color: var(--text-secondary);
       display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      flex-direction: column;
+      gap: 8px;
     }
 
-    .login-card {
-      background: white;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-      width: 100%;
-      max-width: 400px;
+    .auth-footer a { 
+      color: var(--accent-emerald); 
+      text-decoration: none; 
+      font-weight: 600; 
     }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 2rem;
-      color: #333;
-    }
-
-    .error-alert {
-      background: #fee;
-      color: #c33;
-      padding: 0.75rem 1rem;
-      border-radius: 4px;
-      margin-bottom: 1rem;
-      font-size: 0.875rem;
-      border: 1px solid #fcc;
-    }
-
-    .form-group {
-      margin-bottom: 1.5rem;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-      color: #555;
-    }
-
-    .form-control {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 1rem;
-    }
-
-    .form-control:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    .error {
-      color: #e74c3c;
-      font-size: 0.875rem;
-      margin-top: 0.25rem;
-    }
-
-    .btn-primary {
-      width: 100%;
-      padding: 0.75rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      border-radius: 4px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      opacity: 0.9;
-    }
-
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .auth-links {
-      margin-top: 2rem;
-      text-align: center;
-      font-size: 0.875rem;
-    }
-
-    .auth-links p {
-      margin: 0.5rem 0;
-    }
-
-    .auth-links a {
-      color: #667eea;
-      text-decoration: none;
-      font-weight: 500;
-    }
-
-    .auth-links a:hover {
-      text-decoration: underline;
-    }
+    .auth-footer a:hover { text-decoration: underline; }
+    
+    .w-full { width: 100%; }
   `]
+
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+
+  ngOnInit() {
+    if (this.authService.isAuthenticated()) {
+      this.router.navigate(['/dashboard']);
+    }
+  }
 
   loginForm = this.fb.group({
     username: ['', [Validators.required]],

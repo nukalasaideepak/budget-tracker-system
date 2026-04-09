@@ -1,0 +1,20 @@
+<div style="position: relative;">
+  <button 
+    (click)="toggleChat()" 
+    style="position: fixed; bottom: 32px; right: 32px; z-index: 1001; background: #1976d2; color: #fff; border: none; border-radius: 50%; width: 56px; height: 56px; box-shadow: 0 2px 8px rgba(0,0,0,0.18); font-size: 2rem; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+    <span *ngIf="!isOpen">💬</span>
+    <span *ngIf="isOpen">✖️</span>
+  </button>
+
+  <div *ngIf="isOpen" class="chat-box" style="position: fixed; bottom: 100px; right: 32px; z-index: 1000;">
+    <div class="messages">
+      <div *ngFor="let msg of messages" [ngClass]="msg.sender">
+        <span>{{ msg.text }}</span>
+      </div>
+    </div>
+    <div class="input-row">
+      <input [(ngModel)]="userMessage" (keyup.enter)="sendMessage()" placeholder="Type your question..." />
+      <button (click)="sendMessage()">Send</button>
+    </div>
+  </div>
+</div>

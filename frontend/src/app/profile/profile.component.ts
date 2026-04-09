@@ -2,109 +2,99 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProfileService, UserProfile } from '../services/profile.service';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 
 import { SidebarComponent } from '../sidebar/sidebar.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, SidebarComponent],
+  imports: [CommonModule, ReactiveFormsModule, SidebarComponent],
   template: `
-    <div class="layout">
-      <!-- Shared Sidebar -->
-      <app-sidebar></app-sidebar>
+    <header class="page-header">
+      <h1>Account <span class="accent">Settings</span></h1>
+      <p class="subtitle">Manage your personal information and financial targets.</p>
+    </header>
 
-      <main class="main-content">
-        <header class="page-header">
-          <h1>Account <span class="accent">Settings</span></h1>
-          <p class="subtitle">Manage your personal information and financial targets.</p>
-        </header>
+    <section class="glass glass-card profile-section animate-fade">
+      <div class="profile-header">
+        <div class="avatar-large">{{ (profile()?.username || 'BW').substring(0, 2).toUpperCase() }}</div>
+        <div class="profile-meta">
+          <h2>{{ profile()?.username || 'Sai Deepak' }}</h2>
+          <p>{{ (profile()?.email) || 'No email set' }} | <span class="tag">Active Account</span></p>
+        </div>
+      </div>
 
-        <section class="glass glass-card profile-section animate-fade">
-          <div class="profile-header">
-            <div class="avatar-large">{{ (profile()?.username || 'BW').substring(0, 2).toUpperCase() }}</div>
-            <div class="profile-meta">
-              <h2>{{ profile()?.username || 'Sai Deepak' }}</h2>
-              <p>{{ (profile()?.email) || 'No email set' }} | <span class="tag">Active Account</span></p>
-            </div>
+      <form [formGroup]="profileForm" class="profile-form">
+        <div class="section-header-row">
+          <div class="section-title">Account Security</div>
+        </div>
+        
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Email Address</label>
+            <input type="email" formControlName="email" placeholder="example@mail.com">
+          </div>
+          
+          <div class="form-group full-width" *ngIf="!showPasswordEdit">
+            <button type="button" class="btn btn-outline" (click)="showPasswordEdit = true">
+              🔒 Change Password
+            </button>
           </div>
 
-          <form [formGroup]="profileForm" class="profile-form">
-            <div class="section-header-row">
-              <div class="section-title">Account Security</div>
-            </div>
-            
-            <div class="form-grid">
-              <div class="form-group full-width">
-                <label>Email Address</label>
-                <input type="email" formControlName="email" placeholder="example@mail.com">
-              </div>
-              
-              <div class="form-group full-width" *ngIf="!showPasswordEdit">
-                <button type="button" class="btn btn-outline" (click)="showPasswordEdit = true">
-                  🔒 Change Password
+          <!-- Step 1: Verify Current Password -->
+          <ng-container *ngIf="showPasswordEdit && !isCurrentPasswordVerified">
+            <div class="form-group full-width">
+              <label>Current Password</label>
+              <div class="input-with-action">
+                <input type="password" formControlName="currentPassword" placeholder="Enter current password to continue">
+                <button type="button" class="btn btn-primary" (click)="verifyCurrentPassword()" [disabled]="!this.profileForm.get('currentPassword')?.value">
+                  Verify
                 </button>
               </div>
-
-              <!-- Step 1: Verify Current Password -->
-              <ng-container *ngIf="showPasswordEdit && !isCurrentPasswordVerified">
-                <div class="form-group full-width">
-                  <label>Current Password</label>
-                  <div class="input-with-action">
-                    <input type="password" formControlName="currentPassword" placeholder="Enter current password to continue">
-                    <button type="button" class="btn btn-primary" (click)="verifyCurrentPassword()" [disabled]="!this.profileForm.get('currentPassword')?.value">
-                      Verify
-                    </button>
-                  </div>
-                  @if (passwordError) {
-                    <p class="error-msg">{{ passwordError }}</p>
-                  }
-                  <button type="button" class="btn-text" (click)="cancelPasswordEdit()">Cancel</button>
-                </div>
-              </ng-container>
-
-              <!-- Step 2: Enter New Password -->
-              <ng-container *ngIf="showPasswordEdit && isCurrentPasswordVerified">
-                <div class="form-group">
-                  <label>New Password</label>
-                  <input type="password" formControlName="password" placeholder="Min 6 characters">
-                </div>
-                
-                <div class="form-group">
-                  <label>Confirm New Password</label>
-                  <input type="password" formControlName="confirmPassword" placeholder="Repeat new password">
-                  @if (profileForm.errors?.['mismatch'] && profileForm.get('confirmPassword')?.touched) {
-                    <p class="error-msg">Passwords do not match</p>
-                  }
-                </div>
-                
-                <div class="form-group full-width">
-                  <button type="button" class="btn-text" (click)="cancelPasswordEdit()">Reset & Cancel</button>
-                </div>
-              </ng-container>
-            </div>
-
-            <div class="form-actions">
-              <button type="button" class="btn btn-primary" (click)="updateProfile()" [disabled]="profileForm.invalid || (showPasswordEdit && !isCurrentPasswordVerified)">
-                Save Changes
-              </button>
-              @if (saveSuccess) {
-                <p class="success-msg animate-fade">Credentials updated successfully! ✨</p>
+              @if (passwordError) {
+                <p class="error-msg">{{ passwordError }}</p>
               }
-              <p class="hint">Security updates are processed with end-to-end encryption.</p>
+              <button type="button" class="btn-text" (click)="cancelPasswordEdit()">Cancel</button>
             </div>
-          </form>
-        </section>
-      </main>
-    </div>
+          </ng-container>
+
+          <!-- Step 2: Enter New Password -->
+          <ng-container *ngIf="showPasswordEdit && isCurrentPasswordVerified">
+            <div class="form-group">
+              <label>New Password</label>
+              <input type="password" formControlName="password" placeholder="Min 6 characters">
+            </div>
+            
+            <div class="form-group">
+              <label>Confirm New Password</label>
+              <input type="password" formControlName="confirmPassword" placeholder="Repeat new password">
+              @if (profileForm.errors?.['mismatch'] && profileForm.get('confirmPassword')?.touched) {
+                <p class="error-msg">Passwords do not match</p>
+              }
+            </div>
+            
+            <div class="form-group full-width">
+              <button type="button" class="btn-text" (click)="cancelPasswordEdit()">Reset & Cancel</button>
+            </div>
+          </ng-container>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-primary" (click)="updateProfile()" [disabled]="profileForm.invalid || (showPasswordEdit && !isCurrentPasswordVerified)">
+            Save Changes
+          </button>
+          @if (saveSuccess) {
+            <p class="success-msg animate-fade">Credentials updated successfully! ✨</p>
+          }
+          <p class="hint">Security updates are processed with end-to-end encryption.</p>
+        </div>
+      </form>
+    </section>
 
     <style>
-      .layout { display: flex; min-height: 100vh; }
-      .main-content { flex: 1; padding: 48px; max-width: 1000px; margin: 0 auto; }
-      
       .page-header { margin-bottom: 40px; }
       .accent { color: var(--accent-emerald); }
+      .subtitle { color: var(--text-secondary); margin-top: 4px; }
       
       .profile-section { padding: 40px; }
       .profile-header { display: flex; align-items: center; gap: 24px; margin-bottom: 48px; padding-bottom: 32px; border-bottom: 1px solid var(--glass-border); }
@@ -141,6 +131,7 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
       .success-msg { color: var(--accent-emerald); font-size: 0.9rem; margin-top: 12px; font-weight: 600; }
       .error-msg { color: #f87171; font-size: 0.8rem; margin-top: 4px; }
     </style>
+
   `
 })
 export class ProfileComponent implements OnInit {
