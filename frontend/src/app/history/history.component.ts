@@ -1,6 +1,8 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { TransactionService, Transaction } from '../services/transaction.service';
+import { CategoryLimitService } from '../services/category-limit.service';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { AddTransactionComponent } from '../dashboard/add-transaction.component';
 
@@ -15,6 +17,16 @@ import { AddTransactionComponent } from '../dashboard/add-transaction.component'
     </header>
 
     <section class="glass glass-card table-container animate-fade">
+      @if (categoryFilter()) {
+        <div class="category-filter-banner">
+          <div class="filter-info">
+            <h3>Category: <span class="accent">{{ categoryFilter() }}</span></h3>
+            <p class="spent-total">Total Spent: <strong>{{ totalSpentOnCategory() | currency:'INR':'symbol-narrow' }}</strong></p>
+          </div>
+          <button class="action-btn" (click)="categoryFilter.set(null)" title="Clear filter">❌</button>
+        </div>
+      }
+
       <table class="history-table">
         <thead>
           <tr>
@@ -23,16 +35,17 @@ import { AddTransactionComponent } from '../dashboard/add-transaction.component'
             <th>Category</th>
             <th>Type</th>
             <th>Amount</th>
-            <th>Alert Limit</th>
+            <th>Category Limit</th>
+
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          @for (tx of transactions(); track tx.id) {
+          @for (tx of filteredTransactions(); track tx.id) {
             <tr>
               <td>{{ tx.date | date:'mediumDate' }}</td>
               <td>{{ tx.description }}</td>
-              <td><span class="category-tag">{{ tx.category }}</span></td>
+              <td><span class="category-tag clickable" (click)="categoryFilter.set(tx.category)" title="Filter by {{ tx.category }}">{{ tx.category }}</span></td>
               <td>
                 <span class="type-tag" [class.income]="tx.type === 'INCOME'">
                   {{ tx.type }}
@@ -42,13 +55,14 @@ import { AddTransactionComponent } from '../dashboard/add-transaction.component'
                 {{ tx.type === 'INCOME' ? '+' : '-' }}{{ tx.amount | currency:'INR':'symbol-narrow' }}
               </td>
               <td>
-                <button *ngIf="tx.type === 'EXPENSE' && tx.expenseLimit" class="limit-tag" (click)="promptLimit(tx)" title="Click to edit limit">
-                  {{ tx.expenseLimit | currency:'INR':'symbol-narrow' }} ✏️
+                <button *ngIf="tx.type === 'EXPENSE' && limitMap()[tx.category]" class="limit-tag" (click)="promptLimit(tx)" title="Click to edit global category limit">
+                  {{ limitMap()[tx.category] | currency:'INR':'symbol-narrow' }} ✏️
                 </button>
-                <span *ngIf="tx.type === 'EXPENSE' && !tx.expenseLimit" style="color:var(--text-secondary);font-size:0.8rem">
-                  <button (click)="promptLimit(tx)" class="set-limit-btn">Set Limit</button>
+                <span *ngIf="tx.type === 'EXPENSE' && !limitMap()[tx.category]" style="color:var(--text-secondary);font-size:0.8rem">
+                  <button class="set-limit-btn" (click)="promptLimit(tx)">Set Limit</button>
                 </span>
               </td>
+
               <td>
                 <div class="tx-actions">
                   <button class="action-btn edit" (click)="toggleAddModal(tx)" title="Edit">✏️</button>
@@ -88,15 +102,15 @@ import { AddTransactionComponent } from '../dashboard/add-transaction.component'
       .type-tag { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; background: rgba(244, 63, 94, 0.1); color: var(--accent-rose); }
       .type-tag.income { background: rgba(16, 185, 129, 0.1); color: var(--accent-emerald); }
       
-      .limit-tag { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; background: rgba(234, 179, 8, 0.1); color: #eab308; border: 1px dashed rgba(234, 179, 8, 0.3); cursor: pointer; transition: 0.2s; }
+      .limit-tag { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; background: rgba(234, 179, 8, 0.1); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3); transition: 0.2s; cursor: pointer; }
       .limit-tag:hover { background: rgba(234, 179, 8, 0.2); }
+
+      .set-limit-btn { background: transparent; border: 1px solid var(--glass-border); color: var(--text-secondary); border-radius: 6px; padding: 4px 8px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
+      .set-limit-btn:hover { color: var(--accent-emerald); border-color: var(--accent-emerald); }
 
       .amount-cell { font-weight: 700; }
       .amount-cell.negative { color: var(--accent-rose); }
       .empty-state { text-align: center; padding: 60px; color: var(--text-secondary); }
-
-      .set-limit-btn { background: transparent; border: 1px solid var(--glass-border); color: var(--text-secondary); border-radius: 6px; padding: 4px 8px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
-      .set-limit-btn:hover { color: var(--accent-emerald); border-color: var(--accent-emerald); }
 
       /* Action Buttons */
       .tx-actions { display: flex; gap: 8px; }
@@ -107,23 +121,61 @@ import { AddTransactionComponent } from '../dashboard/add-transaction.component'
       .action-btn:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
       .action-btn.edit:hover { color: var(--accent-emerald); }
       .action-btn.delete:hover { color: var(--accent-rose); }
+      
+      .clickable { cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
+      .clickable:hover { border-color: var(--accent-emerald); background: rgba(16, 185, 129, 0.1); }
+      
+      .category-filter-banner { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 2px solid rgba(255,255,255,0.05); background: rgba(16, 185, 129, 0.03); }
+      .category-filter-banner h3 { margin: 0; font-size: 1.1rem; }
+      .spent-total { margin: 4px 0 0 0; color: var(--text-secondary); font-size: 0.95rem; }
+      .spent-total strong { color: var(--accent-rose); }
     </style>
 
   `
 })
 export class HistoryComponent implements OnInit {
   private readonly txService = inject(TransactionService);
+  private readonly limitService = inject(CategoryLimitService);
+  private readonly route = inject(ActivatedRoute);
   
   transactions = signal<Transaction[]>([]);
+  limitMap = signal<Record<string, number>>({});
   showAddModal = signal(false);
   selectedTransaction = signal<Transaction | null>(null);
+  categoryFilter = signal<string | null>(null);
+
+  filteredTransactions = computed(() => {
+    const filter = this.categoryFilter();
+    if (!filter) return this.transactions();
+    return this.transactions().filter(tx => tx.category === filter);
+  });
+
+  totalSpentOnCategory = computed(() => {
+    const filter = this.categoryFilter();
+    if (!filter) return 0;
+    return this.transactions()
+      .filter(tx => tx.category === filter && tx.type === 'EXPENSE')
+      .reduce((acc, tx) => acc + Number(tx.amount), 0);
+  });
 
   ngOnInit() {
     this.loadData();
+    this.route.queryParams.subscribe(params => {
+      if (params['category']) {
+        this.categoryFilter.set(params['category']);
+      }
+    });
   }
 
   loadData() {
     this.txService.getTransactions().subscribe(txs => this.transactions.set(txs));
+    this.limitService.getLimits().subscribe(limits => {
+      const map: Record<string, number> = {};
+      limits.forEach(l => {
+        if (l.limitAmount > 0) map[l.category] = l.limitAmount;
+      });
+      this.limitMap.set(map);
+    });
   }
 
   toggleAddModal(tx: Transaction | null = null) {
@@ -145,21 +197,23 @@ export class HistoryComponent implements OnInit {
   }
 
   promptLimit(tx: Transaction) {
-    const currentVal = tx.expenseLimit ? tx.expenseLimit.toString() : '';
-    const userInput = prompt(`Set an alert limit for '${tx.description}' (₹):\nType 0 or leave blank to remove limit.`, currentVal);
+    const currentVal = this.limitMap()[tx.category] || '';
+    const userInput = prompt(`Set global alert limit for '${tx.category}' (₹):\nType 0 or leave blank to remove limit.`, currentVal.toString());
     if (userInput !== null) {
       const limit = Number(userInput);
       if (!isNaN(limit) && limit >= 0) {
-        const updatedTx = { ...tx, expenseLimit: (limit === 0 || userInput.trim() === '') ? undefined : limit };
-        if (tx.id) {
-          this.txService.updateTransaction(tx.id, updatedTx).subscribe({
-            next: () => this.loadData(),
-            error: () => alert('Failed to set limit. Check backend connection.')
-          });
-        }
+        this.limitService.saveLimit({
+          category: tx.category,
+          limitAmount: (limit === 0 || userInput.trim() === '') ? 0 : limit
+        }).subscribe({
+          next: () => this.loadData(),
+          error: () => alert('Failed to set category limit. Check backend connection.')
+        });
       } else {
         alert('Please enter a valid number.');
       }
     }
   }
+
+
 }

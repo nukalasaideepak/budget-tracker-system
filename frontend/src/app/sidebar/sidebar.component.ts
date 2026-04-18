@@ -30,9 +30,7 @@ import { ProfileService, UserProfile } from '../services/profile.service';
         <a routerLink="/export" routerLinkActive="active" class="nav-link">
           <span class="icon">📂</span> Export
         </a>
-        <a routerLink="/compare" routerLinkActive="active" class="nav-link">
-          <span class="icon">🔍</span> Compare Fares
-        </a>
+
         <a routerLink="/profile" routerLinkActive="active" class="nav-link">
           <span class="icon">⚙️</span> Settings
         </a>

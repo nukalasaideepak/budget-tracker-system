@@ -5,6 +5,7 @@
   </div>
   <div class="actions">
     <!-- Removed Add Transaction Button as per user request -->
+    <button class="btn btn-primary" (click)="toggleLimitsModal()">Manage Category Limits</button>
   </div>
 </header>
 
@@ -41,7 +42,7 @@
 
 <!-- Quick Add Section (Middle) -->
 <section class="glass glass-card quick-add animate-fade" style="animation-delay: 0.4s">
-  <div class="section-header">
+  <div class="quick-header">
     <h3>Quick Add Expense</h3>
     <p class="subtitle-sm">Save your daily spend instantly</p>
   </div>
@@ -81,12 +82,6 @@
       </div>
     }
 
-    @if (quickAddForm.get('type')?.value === 'EXPENSE') {
-      <div class="input-group animate-slide-in">
-        <label class="input-label">Alert Limit (₹)</label>
-        <input type="number" formControlName="expenseLimit" placeholder="Optional limit">
-      </div>
-    }
 
     <button type="submit" class="btn btn-primary" [disabled]="quickAddForm.invalid">
       Add
@@ -107,7 +102,10 @@
         <div class="tx-icon">💰</div>
         <div class="tx-details">
           <p class="tx-title">{{ tx.description }}</p>
-          <p class="tx-date">{{ tx.date | date }}</p>
+          <p class="tx-date">
+            <span class="category-tag clickable" [routerLink]="['/history']" [queryParams]="{category: tx.category}">{{ tx.category }}</span> 
+            • {{ tx.date | date }}
+          </p>
         </div>
         <div class="tx-amount" [class.negative]="tx.type === 'EXPENSE'">
           {{ tx.type === 'INCOME' ? '+' : '-' }}{{ tx.amount | currency:'INR':'symbol-narrow' }}
@@ -125,10 +123,7 @@
   </div>
 </section>
 
-<!-- Finance Advice Chat Box -->
-<div style="position: fixed; bottom: 32px; right: 32px; z-index: 1000;">
-  <app-chat-box></app-chat-box>
-</div>
+
 
 <!-- Add Transaction Modal -->
 @if (showAddModal()) {
@@ -137,6 +132,13 @@
     (onClose)="toggleAddModal()" 
     (onSaved)="loadData()">
   </app-add-transaction>
+}
+
+<!-- Manage Limits Modal -->
+@if (showLimitsModal()) {
+  <app-manage-limits 
+    (onClose)="toggleLimitsModal()">
+  </app-manage-limits>
 }
 
 <style>
@@ -152,6 +154,8 @@
 .progress-bar { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.05); border-radius: 10px; margin-top: 16px; overflow: hidden; }
 .fill { height: 100%; border-radius: 10px; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.quick-header { margin-bottom: 24px; }
+.quick-header h3 { margin-bottom: 4px; }
 
 .btn { padding: 12px 24px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .btn-primary { background: var(--accent-emerald); color: var(--bg-dark); }
@@ -179,11 +183,15 @@
 .tx-amount { font-weight: 700; }
 .tx-amount.negative { color: var(--accent-rose); }
 
+.category-tag { padding: 2px 8px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 0.7rem; color: var(--text-secondary); margin-right: 4px; }
+.clickable { cursor: pointer; transition: 0.2s; border: 1px solid transparent; text-decoration: none; }
+.clickable:hover { border-color: var(--accent-emerald); background: rgba(16, 185, 129, 0.1); color: var(--accent-emerald); }
+
 /** Quick Add Styles **/
 .quick-add { margin-top: 48px; padding: 32px; }
-.subtitle-sm { font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px; margin-bottom: 24px; }
+.subtitle-sm { font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px; margin-bottom: 0px; }
 .quick-form { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
-.input-group { position: relative; display: flex; flex-direction: column; gap: 8px; }
+.input-group { flex: 1; min-width: 140px; position: relative; display: flex; flex-direction: column; gap: 8px; }
 .input-label { font-size: 0.75rem; font-weight: 600; color: var(--text-emerald); margin-left: 2px; text-transform: uppercase; letter-spacing: 1px; }
 .input-group input, .input-group select {
   background: rgba(255, 255, 255, 0.05);
@@ -203,7 +211,11 @@
   border-color: var(--accent-emerald);
   background: rgba(255, 255, 255, 0.08);
 }
-.input-group input[type="number"] { padding-left: 32px; width: 140px; }
+.input-group input[type="number"], .input-group input, .input-group select {
+  width: 100%;
+  box-sizing: border-box;
+}
+.input-group input[type="number"] { padding-left: 32px; }
 .currency { position: absolute; left: 14px; bottom: 14px; color: var(--accent-emerald); font-weight: 600; }
 
 .animate-slide-in {

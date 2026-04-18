@@ -13,12 +13,12 @@
 		<relativePath/>
 	</parent>
 
-	<groupId>com.example</groupId>
-	<artifactId>mileStone1</artifactId>
+	<groupId>com.budgetwise</groupId>
+	<artifactId>budgetwise-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
-	<name>mileStone1</name>
-	<description>BudgetWise Milestone Backend</description>
+	<name>budgetwise</name>
+	<description>BudgetWise Backend</description>
 
 	<properties>
 		<java.version>17</java.version>
@@ -149,7 +149,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
-					<mainClass>com.example.mileStone1.MileStone1Application</mainClass>
+					<mainClass>com.budgetwise.BudgetWiseApplication</mainClass>
 				</configuration>
 			</plugin>
 

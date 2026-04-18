@@ -10,7 +10,7 @@ import { ReportsComponent } from './reports/reports.component';
 import { ExportComponent } from './export/export.component';
 import { VerifyEmailComponent } from './auth/verify-email.component';
 import { ResetPasswordComponent } from './auth/reset-password.component';
-import { CompareComponent } from './compare/compare.component';
+
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -43,11 +43,7 @@ export const routes: Routes = [
     component: ExportComponent,
     canActivate: [authGuard]
   },
-  { 
-    path: 'compare', 
-    component: CompareComponent,
-    canActivate: [authGuard]
-  },
+
   { 
     path: 'profile', 
     component: ProfileComponent,

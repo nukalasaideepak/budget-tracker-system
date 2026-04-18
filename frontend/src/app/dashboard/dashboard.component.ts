@@ -8,13 +8,12 @@ import { BudgetService, Budget } from '../services/budget.service';
 import { AuthService } from '../services/auth.service';
 import { AddTransactionComponent } from './add-transaction.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
-import { ChatBoxComponent } from '../chat-box/chat-box.component';
 import { ManageLimitsComponent } from './manage-limits.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, AddTransactionComponent, ManageLimitsComponent, SidebarComponent, ReactiveFormsModule, FormsModule, ChatBoxComponent],
+  imports: [CommonModule, RouterLink, RouterLinkActive, AddTransactionComponent, ManageLimitsComponent, SidebarComponent, ReactiveFormsModule, FormsModule],
   templateUrl: './dashboard.component.html',
   styles: [`
     :host { display: block; }
@@ -32,8 +31,7 @@ export class DashboardComponent implements OnInit {
     amount: [null as number | null, [Validators.required, Validators.min(0.01)]],
     type: ['', [Validators.required]],
     category: ['', [Validators.required]],
-    description: [''],
-    expenseLimit: [null as number | null]
+    description: ['']
   });
 
   // Reactive state
@@ -143,8 +141,7 @@ export class DashboardComponent implements OnInit {
         type: val.type,
         date: new Date().toISOString().split('T')[0],
         username: this.authService.currentUser() || 'User',
-        account: 'Cash',
-        expenseLimit: val.expenseLimit || null
+        account: 'Cash'
       };
 
       this.txService.addTransaction(transaction as any).subscribe({

@@ -53,6 +53,10 @@ export class AuthService {
     return this.http.post<any>(`${this.apiUrl}/auth/forgot-password`, { email });
   }
 
+  verifyResetOtp(token: string) {
+    return this.http.post<any>(`${this.apiUrl}/auth/verify-reset-otp`, { token });
+  }
+
   resetPassword(token: string, newPassword: string) {
     return this.http.post<any>(`${this.apiUrl}/auth/reset-password`, { token, newPassword });
   }
